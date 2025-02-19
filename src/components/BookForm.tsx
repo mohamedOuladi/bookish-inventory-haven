@@ -14,14 +14,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Book } from '@/types/book';
-import { toast } from 'sonner';
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author is required"),
   isbn: z.string().min(10, "ISBN must be at least 10 characters"),
-  quantity: z.string().transform(Number).pipe(z.number().min(0, "Quantity must be positive")),
-  price: z.string().transform(Number).pipe(z.number().min(0, "Price must be positive")),
+  quantity: z.number().min(0, "Quantity must be positive"),
+  price: z.number().min(0, "Price must be positive"),
 });
 
 interface BookFormProps {
@@ -32,27 +31,20 @@ interface BookFormProps {
 const BookForm = ({ onSubmit, initialData }: BookFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData ? {
-      ...initialData,
-      quantity: String(initialData.quantity),
-      price: String(initialData.price),
-    } : {
-      title: "",
-      author: "",
-      isbn: "",
-      quantity: "",
-      price: "",
+    defaultValues: {
+      title: initialData?.title || "",
+      author: initialData?.author || "",
+      isbn: initialData?.isbn || "",
+      quantity: initialData?.quantity || 0,
+      price: initialData?.price || 0,
     },
   });
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    onSubmit({
-      ...values,
-      quantity: Number(values.quantity),
-      price: Number(values.price),
-    });
-    toast.success("Book saved successfully!");
-    form.reset();
+    onSubmit(values);
+    if (!initialData) {
+      form.reset();
+    }
   };
 
   return (
@@ -105,7 +97,11 @@ const BookForm = ({ onSubmit, initialData }: BookFormProps) => {
               <FormItem>
                 <FormLabel>Quantity</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input 
+                    type="number" 
+                    {...field} 
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,7 +114,12 @@ const BookForm = ({ onSubmit, initialData }: BookFormProps) => {
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" {...field} />
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    {...field} 
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
